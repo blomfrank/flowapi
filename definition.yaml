@@ -543,7 +543,7 @@ components:
                 - 1
           deadline: false
       properties:
-        id:
+        ID:
           type: integer
           example: 3824
           description: This is the ID of the instance of the flow. This ID is needed in a fllowing request to be able to continue to the next step.
@@ -597,82 +597,11 @@ components:
           maxItems: 20
           items:
             type: object
-            properties:
-              type:
-                type: string
-                description: |-
-                  This is the type of the element. Can be of the following values:
-                  - display
-                  - select
-                  - input
-                  - link
-                  - remote-select
-                enum:
-                  - display
-                  - select
-                  - input
-                  - link
-                  - remote-select
-              data:
-                oneOf:
-                  - description: 'Resultaat voor het type "display"'
-                    properties:
-                      text:
-                        type: string
-                        description: Text om weer te geven
-                  - description: 'Result for type "select"'
-                    properties:
-                      list:
-                        type: array
-                        description: This list contains alle the options.
-                        items:
-                          type: object
-                          description: 'Result for type "display"'
-                          properties:
-                            text:
-                              type: string
-                              description: Text to be displayed
-                            value:
-                              type: string
-                              description: Value to be returned when this choice is choosen.
-                      outputKey:
-                        type: string
-                        description: Name of the variable that contains the value of the choosen option.
-                  - description: 'Result for type "input"'
-                    properties:
-                      outputKey:
-                        type: string
-                        description: Name of the variable that contains the value of the returned value
-                      required:
-                        type: boolean
-                        description: Indicates if the field is required.
-                      pattern:
-                        type: string
-                        description: The value should satify this regex pattern.
-                  - description: 'Result for type "link"'
-                    properties:
-                      url:
-                        type: string
-                        description: url that will be openened when the link is clicked or chosen.
-                      text:
-                        type: string
-                        description: The text that should be displayed a a link
-                      target:
-                        type: string
-                        description: a target attribut
-                  - description: 'Result for type "remote-select"'
-                    properties:
-                      query:
-                        type: string
-                        description: ' url die ingeladen moet worden,'
-                      outputKey:
-                        type: string
-                        description: "Variable naam waarin de keuze moet worden meegegeven in de operatie \ncontinue"
-                      required:
-                        type: string
-                        description: true als veld verplicht is
-                type: object
+        deadline:
+          type: boolean
+        _requireComment:
+          type: boolean
       required:
-        - id
+        - ID
         - elements
   securitySchemes: {}
