@@ -559,7 +559,7 @@ components:
               type: object
             activeNode:
               type: object
-              example: 4
+              example: {"4"}
               properties:
                 id:
                   type: integer
@@ -586,10 +586,6 @@ components:
               items:
                 type: integer
                 example:
-                  - 1
-                  - 2
-                  - 5
-                  - 6
         elements:
           type: array
           description: Elements are the elements connected to the current node.
@@ -597,6 +593,22 @@ components:
           maxItems: 20
           items:
             type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - display
+                  - select
+                  - input
+                  - link
+                  - remote-select
+              data:
+                anyOf:
+                  - $ref: '#/components/schemas/ElementSelect'
+                  - $ref: '#/components/schemas/ElementDisplay'
+                  - $ref: '#/components/schemas/ElementInput'
+                  - $ref: '#/components/schemas/ElementLink'
+                  - $ref: '#/components/schemas/ElementRemoteSelect'
         deadline:
           type: boolean
         _requireComment:
@@ -604,4 +616,70 @@ components:
       required:
         - ID
         - elements
+    ElementSelect:
+      title: ElementSelect
+      type: object
+      properties:
+        List:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              text:
+                type: string
+        outputKey:
+          type: string
+      x-examples:
+        example:
+          outputKey: choice
+          list:
+            - value: 0
+              text: Spoedeisend (<2 werkdagen)
+            - value: 1
+              text: Normaal (<10 werkdagen)
+            - value: 2
+              text: Klacht afwijzen
+    ElementDisplay:
+      title: ElementDisplay
+      type: object
+      x-examples:
+        example:
+          text: |-
+            Coordineer de oplossing en kies de juiste bewaking.
+            Wat moet er met de klacht gebeuren?
+      properties:
+        text:
+          type: string
+    ElementInput:
+      title: ElementInput
+      type: object
+      properties:
+        outputKey:
+          type: string
+        required:
+          type: boolean
+        pattern:
+          type: string
+    ElementLink:
+      title: ElementLink
+      type: object
+      properties:
+        url:
+          type: string
+        text:
+          type: string
+        target:
+          type: string
+    ElementRemoteSelect:
+      title: ElementRemoteSelect
+      type: object
+      properties:
+        query:
+          type: string
+        outputKey:
+          type: string
+        required:
+          type: boolean
   securitySchemes: {}
