@@ -42,6 +42,7 @@ paths:
           description: If debug info should be included in the response
         - schema:
             type: string
+            example: 'Bearer {token}'
           in: header
           name: Authorization
           description: Contains the token received with the operation /auth. This is needed to get access.
@@ -363,35 +364,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user:
-                    type: object
-                    properties:
-                      ID:
-                        type: integer
-                        description: The ID of the user that requested a new token
-                      fullName:
-                        type: string
-                        description: The fullname of the user that requested a new token
-                      profileImage:
-                        type: string
-                        description: The url of the image of the user that requested a new token
-                      language:
-                        type: string
-                        description: The default language of the user that requested a new token
-                    required:
-                      - ID
-                      - fullName
-                      - profileImage
-                      - language
-                  token:
-                    type: string
-                    description: The token that can be used to do new requests
-                  refreshToken:
-                    type: string
-                required:
-                  - token
+                $ref: '#/components/schemas/Authentication'
               examples:
                 example:
                   value:
@@ -412,9 +385,11 @@ paths:
               properties:
                 loginName:
                   type: string
+                  description: loginname that is used for logging in
                 password:
                   type: string
                   format: password
+                  description: password that matches with the loginname
             examples:
               example:
                 value:
@@ -555,7 +530,8 @@ components:
               type: object
             activeNode:
               type: object
-              example: {"4"}
+              example:
+                '4': null
               properties:
                 id:
                   type: integer
@@ -581,7 +557,7 @@ components:
               type: array
               items:
                 type: integer
-                example:
+                example: null
         elements:
           type: array
           description: Elements are the elements connected to the current node.
@@ -615,6 +591,17 @@ components:
     ElementSelect:
       title: ElementSelect
       type: object
+      x-examples:
+        example:
+          outputKey: choice
+          list:
+            - value: 0
+              text: Spoedeisend (<2 werkdagen)
+            - value: 1
+              text: Normaal (<10 werkdagen)
+            - value: 2
+              text: Klacht afwijzen
+      description: type select
       properties:
         List:
           type: array
@@ -627,16 +614,6 @@ components:
                 type: string
         outputKey:
           type: string
-      x-examples:
-        example:
-          outputKey: choice
-          list:
-            - value: 0
-              text: Spoedeisend (<2 werkdagen)
-            - value: 1
-              text: Normaal (<10 werkdagen)
-            - value: 2
-              text: Klacht afwijzen
     ElementDisplay:
       title: ElementDisplay
       type: object
@@ -645,12 +622,14 @@ components:
           text: |-
             Coordineer de oplossing en kies de juiste bewaking.
             Wat moet er met de klacht gebeuren?
+      description: type display
       properties:
         text:
           type: string
     ElementInput:
       title: ElementInput
       type: object
+      description: type input
       properties:
         outputKey:
           type: string
@@ -661,6 +640,7 @@ components:
     ElementLink:
       title: ElementLink
       type: object
+      description: type link
       properties:
         url:
           type: string
@@ -671,6 +651,7 @@ components:
     ElementRemoteSelect:
       title: ElementRemoteSelect
       type: object
+      description: type remote-select
       properties:
         query:
           type: string
@@ -678,4 +659,37 @@ components:
           type: string
         required:
           type: boolean
+    Authentication:
+      title: Authentication
+      type: object
+      properties:
+        user:
+          type: object
+          required:
+            - ID
+            - fullName
+            - profileImage
+            - language
+          properties:
+            ID:
+              type: integer
+              description: ID of the user that requested a token
+            fullName:
+              type: string
+              description: Full name of the user that requested a token
+            profileImage:
+              type: string
+              description: url of the profile image of the user that requested a token
+            language:
+              type: string
+              description: default language of the user that requested a token
+        token:
+          type: string
+          description: Token than can be used in following requests
+        RefreshToken:
+          type: string
+      required:
+        - user
+        - token
+        - RefreshToken
   securitySchemes: {}
