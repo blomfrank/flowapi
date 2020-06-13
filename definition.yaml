@@ -1,33 +1,35 @@
 openapi: 3.0.0
 servers:
-  - description: SwaggerHub API Auto Mocking
-    url: 'https://virtserver.swaggerhub.com/boukestam/Flow/1.0.0 '
-  - description: Test server
-    url: 'https://flow-server-test.azurewebsites.com'
+  - description: Ontwikkel server
+    url: 'https://teamplatform-ontwikkel.azurewebsites.net/data/iris'
 info:
   description: This is the REST API for Flow
   version: 1.0.0
   title: Flow REST API
   contact:
-    email: bouke.stam@kubion.nl
+    email: info@kubion.nl
 tags:
   - name: Instance
   - name: Flow
   - name: Table
   - name: Type
 paths:
-  '/instance/{code}/init':
+  'flow//instance/{code}/init':
+    tags:
+      - Instance
+    parameters:
+      - schema:
+          type: string
+        name: code
+        in: path
+        description: The code of the flow that should be started.
+        required: true
     post:
+      operationId: createandstartflow
       summary: Create and start a new session
       tags:
         - Instance
       parameters:
-        - in: path
-          name: code
-          schema:
-            type: string
-          required: true
-          description: Code of the flow
         - in: query
           name: dev
           schema:
@@ -40,6 +42,12 @@ paths:
             type: boolean
           required: false
           description: If debug info should be included in the response
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Contains the token received with the operation /auth. This is needed to get access.
+          required: true
       responses:
         '200':
           description: Flow initialized successfully
@@ -47,6 +55,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FLOWResult'
+              examples:
+                example:
+                  value:
+                    elements:
+                      - type: display
+                        data:
+                          text: |-
+                            Coordineer de oplossing en kies de juiste bewaking.
+                            Wat moet er met de klacht gebeuren?
+                      - type: select
+                        data:
+                          outputKey: choice
+                          list:
+                            - value: 0
+                              text: Spoedeisend (<2 werkdagen)
+                            - value: 1
+                              text: Normaal (<10 werkdagen)
+                            - value: 2
+                              text: Klacht afwijzen
+                    _requireComment: false
+                    ID: 1425
+                    debug:
+                      - id: 3k8itoecmyl4efp9
+                        state:
+                          ruimte: slaapkamer
+                          element: kraan
+                        activeNode:
+                          id: 7
+                          label: Beoordelen klacht
+                          trace:
+                            completedLabel: Klacht beoordeeld
+                          deadline:
+                            duration: PT8H
+                            nodeId: 0
+                          handler:
+                            handlerId: 1014
+                          actions:
+                            - data:
+                                name: Ask_question
+                                stateObj:
+                                  question: |-
+                                    Coordineer de oplossing en kies de juiste bewaking.
+                                    Wat moet er met de klacht gebeuren?
+                                  options:
+                                    - text: Spoedeisend (<2 werkdagen)
+                                      type: transition
+                                      value: 11
+                                    - text: Normaal (<10 werkdagen)
+                                      type: transition
+                                      value: 12
+                                    - text: Klacht afwijzen
+                                      type: transition
+                                      value: 13
+                                configObj: {}
+                                outputKey: ''
+                        code: Klachten
+                        trace:
+                          - 7
+                      - id: ipfjn4lh7fi12d0-
+                        state:
+                          question: |-
+                            Coordineer de oplossing en kies de juiste bewaking.
+                            Wat moet er met de klacht gebeuren?
+                          options:
+                            - text: Spoedeisend (<2 werkdagen)
+                              type: transition
+                              value: 11
+                            - text: Normaal (<10 werkdagen)
+                              type: transition
+                              value: 12
+                            - text: Klacht afwijzen
+                              type: transition
+                              value: 13
+                        activeNode:
+                          id: 1
+                          label: Start
+                          actions:
+                            - data:
+                                elements:
+                                  - type: display
+                                    data:
+                                      $text: question
+                                  - type: select
+                                    data:
+                                      outputKey: choice
+                                      $list: 'options.map((option, index) => ({value: index, text: option.text}))'
+                                $_requireComment: '(state._requireComment !== undefined ? state._requireComment : false)'
+                            - data:
+                                stateObj: {}
+                                configObj: {}
+                                outputKey: ''
+                                $name: 'options[choice].value'
+                              conditionText: "options[choice].type == 'flow'"
+                            - data:
+                                $nodeId: 'options[choice].value'
+                              conditionText: "options[choice].type == 'transition'"
+                            - data:
+                                output: ''
+                        code: Ask_question
+                        trace:
+                          - 1
+                    deadline: false
         '404':
           description: There is no flow with code ...
       requestBody:
@@ -55,88 +165,32 @@ paths:
           application/json:
             schema:
               type: object
-  '/instance/{code}/create':
-    post:
-      summary: Create a new session without starting it
-      tags:
-        - Instance
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: string
-          required: true
-          description: Code of the flow
-        - in: query
-          name: dev
-          schema:
-            type: boolean
-          required: false
-          description: If this is a development (test) session
-      responses:
-        '200':
-          description: Flow created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 34873
-        '404':
-          description: There is no flow with code ...
-  '/instance/{id}/start':
-    post:
-      summary: Start an existing session
-      tags:
-        - Instance
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: ID of the session
-        - in: query
-          name: debug
-          schema:
-            type: boolean
-          required: false
-          description: If debug info should be included in the response
-      responses:
-        '200':
-          description: Flow started successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWResult'
-        '404':
-          description: There is no session with id ...
-      requestBody:
-        description: Key/value pairs that will be put into flow state
-        content:
-          application/json:
-            schema:
-              type: object
-  '/instance/{id}/continue':
+              additionalProperties:
+                type: string
+            examples:
+              example:
+                value:
+                  ruimte: slaapkamer
+                  element: kraan
+      description: This operation creates a flow and will start it immediately.
+  'flow/instance/{id}/continue':
     post:
       summary: Continue/advance an existing session
       tags:
         - Instance
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: ID of the session
         - in: query
           name: debug
           schema:
             type: boolean
           required: false
           description: If debug info should be included in the response
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Contains the token received with the operation /auth. This is needed to get access.
+          required: true
       responses:
         '200':
           description: Flow advanced successfully
@@ -144,6 +198,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FLOWResult'
+              examples:
+                example:
+                  value:
+                    elements:
+                      - type: display
+                        data:
+                          text: |-
+                            Coordineer de oplossing en kies de juiste bewaking.
+                            Wat moet er met de klacht gebeuren?
+                      - type: select
+                        data:
+                          outputKey: choice
+                          list:
+                            - value: 0
+                              text: Spoedeisend (<2 werkdagen)
+                            - value: 1
+                              text: Normaal (<10 werkdagen)
+                            - value: 2
+                              text: Klacht afwijzen
+                    _requireComment: false
+                    ID: 1425
+                    debug:
+                      - id: 3k8itoecmyl4efp9
+                        state:
+                          ruimte: slaapkamer
+                          element: kraan
+                        activeNode:
+                          id: 7
+                          label: Beoordelen klacht
+                          trace:
+                            completedLabel: Klacht beoordeeld
+                          deadline:
+                            duration: PT8H
+                            nodeId: 0
+                          handler:
+                            handlerId: 1014
+                          actions:
+                            - data:
+                                name: Ask_question
+                                stateObj:
+                                  question: |-
+                                    Coordineer de oplossing en kies de juiste bewaking.
+                                    Wat moet er met de klacht gebeuren?
+                                  options:
+                                    - text: Spoedeisend (<2 werkdagen)
+                                      type: transition
+                                      value: 11
+                                    - text: Normaal (<10 werkdagen)
+                                      type: transition
+                                      value: 12
+                                    - text: Klacht afwijzen
+                                      type: transition
+                                      value: 13
+                                configObj: {}
+                                outputKey: ''
+                        code: Klachten
+                        trace:
+                          - 7
+                      - id: ipfjn4lh7fi12d0-
+                        state:
+                          question: |-
+                            Coordineer de oplossing en kies de juiste bewaking.
+                            Wat moet er met de klacht gebeuren?
+                          options:
+                            - text: Spoedeisend (<2 werkdagen)
+                              type: transition
+                              value: 11
+                            - text: Normaal (<10 werkdagen)
+                              type: transition
+                              value: 12
+                            - text: Klacht afwijzen
+                              type: transition
+                              value: 13
+                        activeNode:
+                          id: 1
+                          label: Start
+                          actions:
+                            - data:
+                                elements:
+                                  - type: display
+                                    data:
+                                      $text: question
+                                  - type: select
+                                    data:
+                                      outputKey: choice
+                                      $list: 'options.map((option, index) => ({value: index, text: option.text}))'
+                                $_requireComment: '(state._requireComment !== undefined ? state._requireComment : false)'
+                            - data:
+                                stateObj: {}
+                                configObj: {}
+                                outputKey: ''
+                                $name: 'options[choice].value'
+                              conditionText: "options[choice].type == 'flow'"
+                            - data:
+                                $nodeId: 'options[choice].value'
+                              conditionText: "options[choice].type == 'transition'"
+                            - data:
+                                output: ''
+                        code: Ask_question
+                        trace:
+                          - 1
+                    deadline: false
         '404':
           description: There is no session with id ...
       requestBody:
@@ -152,18 +308,26 @@ paths:
           application/json:
             schema:
               type: object
-  '/instance/{id}/back':
+            examples:
+              example:
+                value:
+                  ruimte: slaapkamer
+                  element: kraan
+      description: This operation will ask flow to go the next step.
+      operationId: ContinueFlow
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+        description: This is the ID of the flow instance retrieved with the operation /init
+  'flow/instance/{id}/back':
     post:
       summary: Revert an existing session to the previous step
       tags:
         - Instance
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: ID of the session
         - in: query
           name: debug
           schema:
@@ -179,515 +343,214 @@ paths:
                 $ref: '#/components/schemas/FLOWResult'
         '404':
           description: There is no session with id ...
-  '/instance/{id}/result':
-    get:
-      summary: Get the last result from an existing session
-      tags:
-        - Instance
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: ID of the session
-        - in: query
-          name: debug
-          schema:
-            type: boolean
-          required: false
-          description: If debug info should be included in the response
-      responses:
-        '200':
-          description: Result gotten successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWResult'
-        '404':
-          description: There is no session with id ...
-  '/instance/{id}/layout':
-    get:
-      summary: Get all layout information (e.g. for track and trace) from an existing session
-      tags:
-        - Instance
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: ID of the session
-        - in: query
-          name: debug
-          schema:
-            type: boolean
-          required: false
-          description: If debug info should be included in the response
-      responses:
-        '200':
-          description: Layout gotten successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWLayout'
-        '404':
-          description: There is no session with id ...
-  /flow:
-    get:
-      summary: Gets all flows
-      tags:
-        - Flow
-      responses:
-        '200':
-          description: List of all flows
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FLOWFlow'
+      operationId: GoBackinFlow
+      description: |
+        Goes one step back in the flow. Does an undo on the current step.
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+  /auth:
+    parameters: []
+    tags:
+      - Instance
     post:
-      summary: Creates a flow
       tags:
-        - Flow
+        - Instance
+      summary: ''
+      operationId: post-Auth
       responses:
         '200':
-          description: Created flow successfully
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FLOWFlow'
-        '400':
-          description: 'Invalid name: must be between 3 and 50 characters long'
-        '409':
-          description: Flow with code ... already exists
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      ID:
+                        type: integer
+                        description: The ID of the user that requested a new token
+                      fullName:
+                        type: string
+                        description: The fullname of the user that requested a new token
+                      profileImage:
+                        type: string
+                        description: The url of the image of the user that requested a new token
+                      language:
+                        type: string
+                        description: The default language of the user that requested a new token
+                    required:
+                      - ID
+                      - fullName
+                      - profileImage
+                      - language
+                  token:
+                    type: string
+                    description: The token that can be used to do new requests
+                  refreshToken:
+                    type: string
+                required:
+                  - token
+              examples:
+                example:
+                  value:
+                    user:
+                      ID: 2078
+                      fullName: Eline de Groot
+                      profileImage: ../publishedMedia/d8c3d988096c26f20e1bb6b73bc4beef.jpeg
+                      language: nl
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjA3OCwibmFtZSI6IkVsaW5lIGRlIEdyb290IiwiZXh0ZXJuSUQiOiIyMDc4IiwiaWF0IjoxNTkyMDQyMTkxLCJleHAiOjE1OTIwNDU3OTF9.rLKXWgYc30zlFSkDly2H1wXoPl_GJiXbDjQklaOZZFc
+                    refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjA3OCwibmFtZSI6IkVsaW5lIGRlIEdyb290IiwiaWF0IjoxNTkyMDQyMTkxLCJleHAiOjE1OTIxMjg1OTF9.QHNm4Mfx3vJB6s7n5YiT8DgSeIkZcv_QXGrqZd9Nf34
+        '500':
+          description: Internal Server Error
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                label:
+                loginName:
                   type: string
-                  example: Mijn werkstroom
-                type:
-                  type: integer
-                  example: 3
-  '/flow/{code}':
-    get:
-      summary: Get a single flow
-      tags:
-        - Flow
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the flow
-      responses:
-        '200':
-          description: The flow with that code
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWFlow'
-        '404':
-          description: There is no flow with code ...
-    delete:
-      summary: Deletes a flow
-      tags:
-        - Flow
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the flow
-      responses:
-        '200':
-          description: Deleted flow successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '404':
-          description: There is no flow with code ...
-  '/flow/{code}/tree':
-    get:
-      summary: 'Get the tree (nodes, actions) of a flow'
-      tags:
-        - Flow
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the flow
-      responses:
-        '200':
-          description: The tree of the flow with that code
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWTree'
-        '404':
-          description: There is no flow with code ...
-  '/flow/{code}/graph':
-    get:
-      summary: Get the graph (xml export of drawing) of a flow
-      tags:
-        - Flow
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the flow
-      responses:
-        '200':
-          description: The graph of the flow with that code
-          content:
-            text/xml:
-              schema:
-                $ref: '#/components/schemas/FLOWTree'
-        '404':
-          description: There is no flow with code ...
-    post:
-      summary: Set the graph (xml export of drawing) of a flow
-      tags:
-        - Flow
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the flow
-      responses:
-        '200':
-          description: Set flow graph successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '404':
-          description: There is no flow with code ...
-      requestBody:
-        content:
-          text/xml:
-            schema:
-              type: string
-  '/flow/{code}/publish':
-    post:
-      summary: Publish a new version of the flow
-      tags:
-        - Flow
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the flow
-      responses:
-        '200':
-          description: Published flow successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '404':
-          description: There is no flow with code ...
-  /flow/import:
-    post:
-      summary: Import a json (flow export) or excel (IRIS decision tree export) file
-      tags:
-        - Flow
-      parameters:
-        - in: query
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the new flow
-      responses:
-        '200':
-          description: Published flow successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWFlow'
-        '409':
-          description: Flow with code ... already exists
-      requestBody:
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-  /table:
-    get:
-      summary: Gets all tables
-      tags:
-        - Table
-      responses:
-        '200':
-          description: List of all tables
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FLOWTable'
-    post:
-      summary: Creates a table
-      tags:
-        - Table
-      responses:
-        '200':
-          description: Created table successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWTable'
-        '400':
-          description: 'Invalid name: must be between 3 and 50 characters long'
-        '409':
-          description: Table with code ... already exists
-      requestBody:
-        content:
-          application/json:
+                password:
+                  type: string
+                  format: password
+            examples:
+              example:
+                value:
+                  loginName: eline.de.groot@woonplezier.nu
+                  password: xxxxxxxx
+          application/xml:
             schema:
               type: object
-              properties:
-                label:
-                  type: string
-                  example: Mijn tabel
-                type:
-                  type: string
-                  example: 'DT | RT'
-  '/table/{code}':
-    get:
-      summary: Get a single table
-      tags:
-        - Table
+              properties: {}
+        description: The request body should contain the loginname and password of the user that requests a new token.
+      description: With this operation a token can be requested.
       parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the table
-      responses:
-        '200':
-          description: The table with that code
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FLOWTable'
-        '404':
-          description: There is no table with code ...
-    delete:
-      summary: Deletes a table
-      tags:
-        - Table
-      parameters:
-        - in: path
-          name: code
-          schema:
-            type: integer
-          required: true
-          description: Code of the table
-      responses:
-        '200':
-          description: Deleted table successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '404':
-          description: There is no table with code ...
-  /flowType:
-    get:
-      summary: Gets all flow types
-      tags:
-        - Type
-      responses:
-        '200':
-          description: List of all flow types
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FLOWTypeWithActions'
-  /actionDefinition:
-    get:
-      summary: Gets all action definitions
-      tags:
-        - Type
-      responses:
-        '200':
-          description: List of all action definitions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FLOWActionDefinition'
+        - schema:
+            type: string
+          in: header
+          name: Content-Type
+          description: application/json
 components:
   schemas:
-    FLOWFlow:
-      type: object
-      required:
-        - label
-      properties:
-        id:
-          type: integer
-          example: 3
-        code:
-          type: string
-          example: werkstroom
-        label:
-          type: string
-          example: Werkstroom
-        type:
-          $ref: '#/components/schemas/FLOWType'
-        definition:
-          type: 'string,'
-          example: '{nodes: [...]}'
-        history:
-          type: string
-          example: '[{changes: [...]}]'
-        drawing:
-          type: string
-          example: '<mxGraph><mxNode/></mxGraph>'
-        publishedAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-    FLOWType:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 3
-        code:
-          type: string
-          example: workflow
-        label:
-          type: string
-          example: Werkstroom
-    FLOWTypeWithActions:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 3
-        code:
-          type: string
-          example: workflow
-        label:
-          type: string
-          example: Werkstroom
-        actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/FLOWActionDefinition'
-    FLOWActionDefinition:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 3
-        code:
-          type: string
-          example: transition
-        label:
-          type: string
-          example: Ga naar
-        icon:
-          type: string
-          example: icon-transition
-        options:
-          type: string
-          example: '[{title: "Element toevoegen", ...}]'
-        fields:
-          type: string
-          example: '[{type: "text", ...}]'
-        onCreate:
-          type: string
-          example: 'path => applySet(...)'
-        isFlow:
-          type: string
-          example: false
-    FLOWTable:
-      type: object
-      required:
-        - label
-      properties:
-        id:
-          type: integer
-          example: 3
-        code:
-          type: string
-          example: rv_diagnose
-        label:
-          type: string
-          example: Reparatieverzoek diagnose
-        type:
-          type: string
-          example: 'DT | RT'
-        definition:
-          type: 'string,'
-          example: '{columns: [...], rows: [...]}'
-        history:
-          type: string
-          example: '[{changes: [...]}]'
-        publishedAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
     FLOWResult:
       type: object
-      required:
-        - id
+      description: Description of the current state of a flow
+      x-examples:
+        example:
+          elements:
+            - type: display
+              data:
+                text: |-
+                  Coordineer de oplossing en kies de juiste bewaking.
+                  Wat moet er met de klacht gebeuren?
+            - type: select
+              data:
+                outputKey: choice
+                list:
+                  - value: 0
+                    text: Spoedeisend (<2 werkdagen)
+                  - value: 1
+                    text: Normaal (<10 werkdagen)
+                  - value: 2
+                    text: Klacht afwijzen
+          _requireComment: false
+          ID: 1425
+          debug:
+            - id: 3k8itoecmyl4efp9
+              state:
+                ruimte: slaapkamer
+                element: kraan
+              activeNode:
+                id: 7
+                label: Beoordelen klacht
+                trace:
+                  completedLabel: Klacht beoordeeld
+                deadline:
+                  duration: PT8H
+                  nodeId: 0
+                handler:
+                  handlerId: 1014
+                actions:
+                  - data:
+                      name: Ask_question
+                      stateObj:
+                        question: |-
+                          Coordineer de oplossing en kies de juiste bewaking.
+                          Wat moet er met de klacht gebeuren?
+                        options:
+                          - text: Spoedeisend (<2 werkdagen)
+                            type: transition
+                            value: 11
+                          - text: Normaal (<10 werkdagen)
+                            type: transition
+                            value: 12
+                          - text: Klacht afwijzen
+                            type: transition
+                            value: 13
+                      configObj: {}
+                      outputKey: ''
+              code: Klachten
+              trace:
+                - 7
+            - id: ipfjn4lh7fi12d0-
+              state:
+                question: |-
+                  Coordineer de oplossing en kies de juiste bewaking.
+                  Wat moet er met de klacht gebeuren?
+                options:
+                  - text: Spoedeisend (<2 werkdagen)
+                    type: transition
+                    value: 11
+                  - text: Normaal (<10 werkdagen)
+                    type: transition
+                    value: 12
+                  - text: Klacht afwijzen
+                    type: transition
+                    value: 13
+              activeNode:
+                id: 1
+                label: Start
+                actions:
+                  - data:
+                      elements:
+                        - type: display
+                          data:
+                            $text: question
+                        - type: select
+                          data:
+                            outputKey: choice
+                            $list: 'options.map((option, index) => ({value: index, text: option.text}))'
+                      $_requireComment: '(state._requireComment !== undefined ? state._requireComment : false)'
+                  - data:
+                      stateObj: {}
+                      configObj: {}
+                      outputKey: ''
+                      $name: 'options[choice].value'
+                    conditionText: "options[choice].type == 'flow'"
+                  - data:
+                      $nodeId: 'options[choice].value'
+                    conditionText: "options[choice].type == 'transition'"
+                  - data:
+                      output: ''
+              code: Ask_question
+              trace:
+                - 1
+          deadline: false
       properties:
         id:
           type: integer
           example: 3824
+          description: This is the ID of the instance of the flow. This ID is needed in a fllowing request to be able to continue to the next step.
         debug:
           type: object
+          minProperties: 0
+          description: Shows debug information about the current state of the flow
           properties:
             id:
               type: string
@@ -695,8 +558,26 @@ components:
             state:
               type: object
             activeNode:
-              type: integer
+              type: object
               example: 4
+              properties:
+                id:
+                  type: integer
+                label:
+                  type: string
+                trace:
+                  type: string
+                deadline:
+                  type: object
+                  properties:
+                    duration:
+                      type: string
+                    nodeId:
+                      type: string
+                actions:
+                  type: array
+                  items:
+                    type: object
             code:
               type: string
               example: Klachten_afhandelen
@@ -709,67 +590,89 @@ components:
                   - 2
                   - 5
                   - 6
-        deadline:
-          type: string
-          example: Werkstroom
         elements:
           type: array
+          description: Elements are the elements connected to the current node.
+          minItems: 0
+          maxItems: 20
           items:
             type: object
             properties:
               type:
                 type: string
-                example: 'display | select | input | link'
+                description: |-
+                  This is the type of the element. Can be of the following values:
+                  - display
+                  - select
+                  - input
+                  - link
+                  - remote-select
+                enum:
+                  - display
+                  - select
+                  - input
+                  - link
+                  - remote-select
               data:
+                oneOf:
+                  - description: 'Resultaat voor het type "display"'
+                    properties:
+                      text:
+                        type: string
+                        description: Text om weer te geven
+                  - description: 'Result for type "select"'
+                    properties:
+                      list:
+                        type: array
+                        description: This list contains alle the options.
+                        items:
+                          type: object
+                          description: 'Result for type "display"'
+                          properties:
+                            text:
+                              type: string
+                              description: Text to be displayed
+                            value:
+                              type: string
+                              description: Value to be returned when this choice is choosen.
+                      outputKey:
+                        type: string
+                        description: Name of the variable that contains the value of the choosen option.
+                  - description: 'Result for type "input"'
+                    properties:
+                      outputKey:
+                        type: string
+                        description: Name of the variable that contains the value of the returned value
+                      required:
+                        type: boolean
+                        description: Indicates if the field is required.
+                      pattern:
+                        type: string
+                        description: The value should satify this regex pattern.
+                  - description: 'Result for type "link"'
+                    properties:
+                      url:
+                        type: string
+                        description: url that will be openened when the link is clicked or chosen.
+                      text:
+                        type: string
+                        description: The text that should be displayed a a link
+                      target:
+                        type: string
+                        description: a target attribut
+                  - description: 'Result for type "remote-select"'
+                    properties:
+                      query:
+                        type: string
+                        description: ' url die ingeladen moet worden,'
+                      outputKey:
+                        type: string
+                        description: "Variable naam waarin de keuze moet worden meegegeven in de operatie \ncontinue"
+                      required:
+                        type: string
+                        description: true als veld verplicht is
                 type: object
-    FLOWLayout:
-      type: object
-      properties:
-        startNode:
-          type: integer
-          example: 1
-        nodes:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                example: 1
-              label:
-                type: string
-                example: Start
-              transitions:
-                type: array
-                items:
-                  type: integer
-                  example:
-                    - 2
-                    - 3
-    FLOWTree:
-      type: object
-      properties:
-        startNode:
-          type: integer
-          example: 1
-        nodes:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                example: 1
-              label:
-                type: string
-                example: Start
-              actions:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      example: transition
-                    data:
-                      type: object
+      required:
+        - id
+        - elements
+  securitySchemes: {}
