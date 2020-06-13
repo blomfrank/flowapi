@@ -7,16 +7,14 @@ info:
   version: 1.0.0
   title: Flow REST API
   contact:
-    email: info@kubion.nl
+    email: support@kubion.nl
 tags:
   - name: Instance
   - name: Flow
   - name: Table
   - name: Type
 paths:
-  'flow//instance/{code}/init':
-    tags:
-      - Instance
+  '/flow//instance/{code}/init':
     parameters:
       - schema:
           type: string
@@ -173,7 +171,7 @@ paths:
                   ruimte: slaapkamer
                   element: kraan
       description: This operation creates a flow and will start it immediately.
-  'flow/instance/{id}/continue':
+  '/flow/instance/{id}/continue':
     post:
       summary: Continue/advance an existing session
       tags:
@@ -322,7 +320,7 @@ paths:
         in: path
         required: true
         description: This is the ID of the flow instance retrieved with the operation /init
-  'flow/instance/{id}/back':
+  '/flow/instance/{id}/back':
     post:
       summary: Revert an existing session to the previous step
       tags:
@@ -354,8 +352,6 @@ paths:
         required: true
   /auth:
     parameters: []
-    tags:
-      - Instance
     post:
       tags:
         - Instance
