@@ -32,8 +32,8 @@ paths:
           name: dev
           schema:
             type: boolean
-          required: false
           description: If this is a development (test) session
+          allowEmptyValue: true
         - in: query
           name: debug
           schema:
@@ -46,6 +46,14 @@ paths:
           in: header
           name: Authorization
           description: Contains the token received with the operation /auth. This is needed to get access.
+          required: true
+        - schema:
+            type: string
+            enum:
+              - application/json
+          in: header
+          name: Content-Type
+          description: Defines the format of the response
           required: true
       responses:
         '200':
@@ -158,8 +166,10 @@ paths:
                     deadline: false
         '404':
           description: There is no flow with code ...
+        '500':
+          description: Internal Server Error
       requestBody:
-        description: Key/value pairs that will be put into flow state
+        description: Key/value pairs that will be put into flow state. These parameters can be used in the flow and will work immediately.
         content:
           application/json:
             schema:
@@ -182,6 +192,7 @@ paths:
           name: debug
           schema:
             type: boolean
+
           required: false
           description: If debug info should be included in the response
         - schema:
@@ -190,6 +201,19 @@ paths:
           name: Authorization
           description: Contains the token received with the operation /auth. This is needed to get access.
           required: true
+        - schema:
+            type: string
+            enum:
+              - application/json
+          in: header
+          name: Content-Type
+          description: Defines the format of the response
+          required: true
+        - schema:
+            type: boolean
+          in: query
+          name: dev
+          description: If debug info should be included in the response
       responses:
         '200':
           description: Flow advanced successfully
@@ -299,10 +323,12 @@ paths:
                         trace:
                           - 1
                     deadline: false
-        '404':
+        '201':
+          description: Created
+        '500':
           description: There is no session with id ...
       requestBody:
-        description: Key/value pairs that will be put into flow state
+        description: Key/value pairs that will be put into flow state. In every step new parameters can be loaded or overwritten.
         content:
           application/json:
             schema:
@@ -312,7 +338,7 @@ paths:
                 value:
                   ruimte: slaapkamer
                   element: kraan
-      description: This operation will ask flow to go the next step.
+      description: This operation will ask flow to go further and go to the next node.
       operationId: ContinueFlow
     parameters:
       - schema:
@@ -333,6 +359,25 @@ paths:
             type: boolean
           required: false
           description: If debug info should be included in the response
+        - schema:
+            type: string
+          in: header
+          name: Authorization
+          description: Contains the token received with the operation /auth. This is needed to get access.
+          required: true
+        - schema:
+            type: string
+            enum:
+              - application/json
+          in: header
+          name: Content-Type
+          description: Defines the format of the response
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: dev
+          description: If debug info should be included in the response
       responses:
         '200':
           description: Flow reverted successfully
@@ -342,9 +387,11 @@ paths:
                 $ref: '#/components/schemas/FLOWResult'
         '404':
           description: There is no session with id ...
+        '500':
+          description: Internal Server Error
       operationId: GoBackinFlow
       description: |
-        Goes one step back in the flow. Does an undo on the current step.
+        Goes one step back in the flow. Does an undo on the current node.
     parameters:
       - schema:
           type: string
@@ -390,6 +437,9 @@ paths:
                   type: string
                   format: password
                   description: password that matches with the loginname
+              required:
+                - loginName
+                - password
             examples:
               example:
                 value:
@@ -404,6 +454,8 @@ paths:
       parameters:
         - schema:
             type: string
+            enum:
+              - application/json
           in: header
           name: Content-Type
           description: application/json
@@ -517,7 +569,7 @@ components:
         ID:
           type: integer
           example: 3824
-          description: This is the ID of the instance of the flow. This ID is needed in a fllowing request to be able to continue to the next step.
+          description: This is the ID of the instance of the flow. This ID is needed in a following request to be able to continue to the next step.
         debug:
           type: object
           minProperties: 0
@@ -528,19 +580,24 @@ components:
               example: 12p89urdio4
             state:
               type: object
+              description: The state contains all the key/values of all parameters loaded into the state
             activeNode:
               type: object
               example:
                 '4': null
+              description: activeNode describes the active node
               properties:
                 id:
                   type: integer
+                  description: The ID of the activeNode
                 label:
                   type: string
+                  description: The label of the activeNode
                 trace:
                   type: string
                 deadline:
                   type: object
+                  description: The deadline of the active node
                   properties:
                     duration:
                       type: string
@@ -574,6 +631,7 @@ components:
                   - input
                   - link
                   - remote-select
+                description: The type defines the type of the element connected to the node.
               data:
                 anyOf:
                   - $ref: '#/components/schemas/ElementSelect'
@@ -583,6 +641,7 @@ components:
                   - $ref: '#/components/schemas/ElementRemoteSelect'
         deadline:
           type: boolean
+          description: This is the deadline of the flow. In a decision tree flow this is not relevant.
         _requireComment:
           type: boolean
       required:
@@ -605,15 +664,19 @@ components:
       properties:
         List:
           type: array
+          description: This is the list of options of the select
           items:
             type: object
             properties:
               value:
                 type: string
+                description: The value of an option. Use these value further.
               text:
                 type: string
+                description: The text of an option. This text is only for displaying purposes. Do not use it in a e.g. a condition
         outputKey:
           type: string
+          description: This is the name of the parameter where the value that is chosen will be saved in.
     ElementDisplay:
       title: ElementDisplay
       type: object
@@ -626,6 +689,7 @@ components:
       properties:
         text:
           type: string
+          description: This is the text that will be displayed.
     ElementInput:
       title: ElementInput
       type: object
@@ -633,10 +697,14 @@ components:
       properties:
         outputKey:
           type: string
+          description: This is the name of the parameter where the value that is given will be saved in.
         required:
           type: boolean
+          description: Defines if an input is required
         pattern:
           type: string
+          description: The pattern defines the format of the value of the input. This pattern can e.g. force that the inputed value must be a zipcode.
+          example: "'{\\A[1-9][0-9]{3}[ ]?([A-RT-Za-rt-z][A-Za-z]|[sS][BCbcE-Re-rT-Zt-z])\\z}';"
     ElementLink:
       title: ElementLink
       type: object
@@ -644,24 +712,37 @@ components:
       properties:
         url:
           type: string
+          description: To this url will be navigated when the link is clickedor chosen.
+          format: uri
         text:
           type: string
+          description: The text of the link
         target:
           type: string
+          description: A target attribut
     ElementRemoteSelect:
       title: ElementRemoteSelect
       type: object
       description: type remote-select
+      x-examples: {}
       properties:
         query:
           type: string
+          description: url that should be executed
+          format: uri
         outputKey:
           type: string
+          description: The name of the variable where the result of the query will be saved.
         required:
           type: boolean
+          description: Defines if the outputKey should contain a value.
+      required:
+        - query
+        - outputKey
     Authentication:
       title: Authentication
       type: object
+      description: Describes the result of an authenticated user.
       properties:
         user:
           type: object
@@ -670,6 +751,7 @@ components:
             - fullName
             - profileImage
             - language
+          description: Returns the user object
           properties:
             ID:
               type: integer
@@ -680,16 +762,18 @@ components:
             profileImage:
               type: string
               description: url of the profile image of the user that requested a token
+              format: uri
             language:
               type: string
               description: default language of the user that requested a token
+              example: '"nl"'
         token:
           type: string
           description: Token than can be used in following requests
-        RefreshToken:
+        refreshToken:
           type: string
       required:
         - user
         - token
-        - RefreshToken
+        - refreshToken
   securitySchemes: {}
